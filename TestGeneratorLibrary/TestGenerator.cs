@@ -114,18 +114,93 @@ namespace TestGeneratorLibrary
                 );
 
                 var @class = SyntaxFactory.ClassDeclaration(classDeclaration.Identifier.Text + "Tests")
-                    .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)));
+                    .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)))
+                    .WithAttributeLists(
+                        SyntaxFactory.SingletonList
+                        (
+                            SyntaxFactory.AttributeList(SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Attribute(SyntaxFactory.IdentifierName("TestClass"))))
+                        )
+                    );
 
                 //var depInj = GenerateDependencyInjection(classDeclaration);
 
                 //@class = @class.AddMembers(depInj.Item1.ToArray());
                // @class = @class.AddMembers(depInj.Item2);
-               // @class = @class.AddMembers(GenerateTestMethods(classDeclaration).ToArray());
+                @class = @class.AddMembers(GenerateTestMethods(classDeclaration).ToArray());
 
                 compilationUnit = compilationUnit.AddMembers(@namespace.AddMembers(@class));
                 var testFile = new TestFile(/*classDeclaration.Identifier.Text*/@class.Identifier.Text, compilationUnit.NormalizeWhitespace("    ","\r\n").ToString());//compilationUnit.NormalizeWhitespace().ToString());
                 return testFile;// compilationUnit.ToString();//.NormalizeWhitespace().ToString();
             });
+        }
+
+        private IEnumerable<MemberDeclarationSyntax> GenerateTestMethods(ClassDeclarationSyntax classDeclaration)
+        {
+            var result = new List<MemberDeclarationSyntax>();
+
+            var methodsDeclarations =
+                classDeclaration.Members.OfType<MethodDeclarationSyntax>()
+                    .Where(syntax => syntax.Modifiers.Any(SyntaxKind.PublicKeyword));
+
+            var uniqueMethodsNames = new List<string>();
+
+            foreach (var methodDeclaration in methodsDeclarations)
+            {
+                var body = new List<StatementSyntax>();
+
+                var baseUniqueName = methodDeclaration.Identifier.Text + "Test";
+                string uniqueName;
+                var i = 0;
+                do
+                {
+                    if (i == 0)
+                    {
+                        uniqueName = baseUniqueName;
+                    }else 
+                        uniqueName = baseUniqueName + i.ToString();
+                    i++;
+                } while (uniqueMethodsNames.Contains(uniqueName));
+                uniqueMethodsNames.Add(uniqueName);
+
+                var isAsync = methodDeclaration.Modifiers.Any(SyntaxKind.AsyncKeyword);
+                var isWithReturn = !(methodDeclaration.ReturnType.ToString() == "void" ||
+                                     isAsync && (methodDeclaration.ReturnType.ToString() == "void" ||
+                                                 methodDeclaration.ReturnType.ToString() == "Task" &&
+                                                 methodDeclaration.ReturnType is not GenericNameSyntax));
+
+              //  body.AddRange(GenerateArrangeStatements(methodDeclaration));
+
+             //   body.Add(GenerateActStatement(classDeclaration, methodDeclaration, isWithReturn, isAsync));
+
+              //  body.AddRange(GenerateAssertStatements(methodDeclaration, isWithReturn, isAsync));
+
+                var method =
+                    SyntaxFactory.MethodDeclaration(
+                        /*isAsync ? SyntaxFactory.IdentifierName("Task") :*/ SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword)),
+                        SyntaxFactory.Identifier(uniqueName)
+                    )
+                    .WithAttributeLists(
+                        SyntaxFactory.SingletonList
+                        (
+                            SyntaxFactory.AttributeList(SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Attribute(SyntaxFactory.IdentifierName("TestMethod"))))
+                        )
+                    )
+                    .WithModifiers(
+                        /*isAsync ?
+                            SyntaxFactory.TokenList(
+                                SyntaxFactory.Token(SyntaxKind.PublicKeyword),
+                                SyntaxFactory.Token(SyntaxKind.AsyncKeyword)
+                            ) :*/
+                            SyntaxFactory.TokenList(
+                                SyntaxFactory.Token(SyntaxKind.PublicKeyword)
+                            )
+                    )
+                    .WithBody(SyntaxFactory.Block(body));
+
+                result.Add(method);
+            }
+
+            return result;
         }
 
     }
