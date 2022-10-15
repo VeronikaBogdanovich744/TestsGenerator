@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -73,14 +74,7 @@ namespace TestGeneratorLibrary
 
         private async Task WriteFileAsync(TestFile data)
         {
-            //var tree = CSharpSyntaxTree.ParseText(data);
-           /* var fileName = (await tree.GetRootAsync())
-                  .DescendantNodes().OfType<ClassDeclarationSyntax>()
-                 .First().Identifier.Text;*/
-            // var filePath = Path.Combine(_config.SavePath, $"{fileName}.cs");
-           // var fileName = data;
             var filePath = Path.Combine(config.SavePath, $"{data.TestName}.cs");
-
             await File.WriteAllTextAsync(filePath, data.data);
         }
 
@@ -88,12 +82,11 @@ namespace TestGeneratorLibrary
         {
             var root = CSharpSyntaxTree.ParseText(fileText).GetCompilationUnitRoot();
             var classes = root.DescendantNodes().OfType<ClassDeclarationSyntax>();
-            // var result = new List<string>();
             var result = new List<TestFile>();
 
             foreach (var class_ in classes)
             {
-                result.Add(/*class_.Identifier.Text*/await GenerateTestClass(class_, root));
+                result.Add(await GenerateTestClass(class_, root));
             }
 
             return result.ToArray();
@@ -106,7 +99,7 @@ namespace TestGeneratorLibrary
             {
                 var compilationUnit = SyntaxFactory.CompilationUnit();
 
-        //        compilationUnit = compilationUnit.AddUsings(GenerateTestUsings(root).ToArray());
+                compilationUnit = compilationUnit.AddUsings(GenerateTestUsings(root).ToArray());
 
                 var baseNamespace = root.DescendantNodes().OfType<NamespaceDeclarationSyntax>().FirstOrDefault();
                 var @namespace = SyntaxFactory.NamespaceDeclaration(
@@ -125,13 +118,43 @@ namespace TestGeneratorLibrary
                 //var depInj = GenerateDependencyInjection(classDeclaration);
 
                 //@class = @class.AddMembers(depInj.Item1.ToArray());
-               // @class = @class.AddMembers(depInj.Item2);
+                // @class = @class.AddMembers(depInj.Item2);
+                //@class = @class.AddMembers(GenerateArrangeStatements(classDeclaration).ToArray());
                 @class = @class.AddMembers(GenerateTestMethods(classDeclaration).ToArray());
 
                 compilationUnit = compilationUnit.AddMembers(@namespace.AddMembers(@class));
                 var testFile = new TestFile(/*classDeclaration.Identifier.Text*/@class.Identifier.Text, compilationUnit.NormalizeWhitespace("    ","\r\n").ToString());//compilationUnit.NormalizeWhitespace().ToString());
                 return testFile;// compilationUnit.ToString();//.NormalizeWhitespace().ToString();
             });
+        }
+
+
+        private IEnumerable<UsingDirectiveSyntax> GenerateTestUsings(CompilationUnitSyntax root)
+        {
+            var result = new Dictionary<string, UsingDirectiveSyntax>();
+           // var defaultUsings = GenerateDefaultTestUsings();
+
+            var @namespace = root.Members.OfType<NamespaceDeclarationSyntax>().FirstOrDefault();
+
+            if (@namespace is not null)
+            {
+                var selfUsing = SyntaxFactory.UsingDirective(
+                    SyntaxFactory.IdentifierName(@namespace.Name.ToString())
+                );
+
+                result.TryAdd(selfUsing.Name.ToString(), selfUsing);
+            }
+            /*
+            foreach (var defaultUsing in defaultUsings)
+            {
+                result.TryAdd(defaultUsing.Name.ToString(), defaultUsing);
+            }*/
+            foreach (var rootUsing in root.Usings)
+            {
+                result.TryAdd(rootUsing.Name.ToString(), rootUsing);
+            }
+
+            return result.Values;
         }
 
         private IEnumerable<MemberDeclarationSyntax> GenerateTestMethods(ClassDeclarationSyntax classDeclaration)
@@ -168,8 +191,8 @@ namespace TestGeneratorLibrary
                                                   methodDeclaration.ReturnType.ToString() == "Task" &&
                                                   methodDeclaration.ReturnType is not GenericNameSyntax));*/
 
-                //  body.AddRange(GenerateArrangeStatements(methodDeclaration));
-                body.Add(GenerateDefaultAssertStatements());
+                //body.AddRange(GenerateArrangeStatements(methodDeclaration));
+                body.Add(GenerateAssertFailStatement());
              //   body.Add(GenerateActStatement(classDeclaration, methodDeclaration, isWithReturn, isAsync));
 
               //  body.AddRange(GenerateAssertStatements(methodDeclaration, isWithReturn, isAsync));
@@ -203,7 +226,7 @@ namespace TestGeneratorLibrary
             return result;
         }
 
-        private StatementSyntax GenerateDefaultAssertStatements()
+        private StatementSyntax GenerateAssertFailStatement()
         {
             var assert = SyntaxFactory.IdentifierName("Assert");
             var fail = SyntaxFactory.IdentifierName("Fail");
@@ -212,47 +235,52 @@ namespace TestGeneratorLibrary
             var argument = SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal("autogenerated")));
             var argumentList = SyntaxFactory.SeparatedList(new[] { argument });
 
-            var writeLineCall =
+            var statement =
                 SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.InvocationExpression(memberaccess,
                 SyntaxFactory.ArgumentList(argumentList)));
 
-           // var text = writeLineCall.ToFullString();
-            return writeLineCall;
-
-
-
-
-            /*
-            return SyntaxFactory.ExpressionStatement(
-            SyntaxFactory.InvocationExpression(
-               SyntaxFactory.MemberAccessExpression(
-                   SyntaxKind.SimpleMemberAccessExpression,
-                   SyntaxFactory.IdentifierName(
-                       @"Assert"),
-                   SyntaxFactory.IdentifierName(
-                       @"Fail"))
-               .WithOperatorToken(
-                   SyntaxFactory.Token(
-                       SyntaxKind.DotToken)))
-           .WithArgumentList(
-               SyntaxFactory.ArgumentList(
-                   SyntaxFactory.SingletonSeparatedList<ArgumentSyntax>(
-                       SyntaxFactory.Argument(
-                           SyntaxFactory.LiteralExpression(
-                               SyntaxKind.StringLiteralExpression,
-                               SyntaxFactory.Literal(
-                                   SyntaxFactory.TriviaList(),
-                                   @"""A""",
-                                   @"""A""",
-                                   SyntaxFactory.TriviaList())))))
-               .WithOpenParenToken(
-                   SyntaxFactory.Token(
-                       SyntaxKind.OpenParenToken))
-               .WithCloseParenToken(
-                   SyntaxFactory.Token(
-                       SyntaxKind.CloseParenToken))));*/
+            return statement;
         }
+
+       /* private List<StatementSyntax> GenerateArrangeStatements(MethodDeclarationSyntax methodDeclaration)
+        {
+            var parameters = methodDeclaration.ParameterList.Parameters;
+            var result = new List<StatementSyntax>();
+
+            foreach (var parameter in parameters)
+            {
+/*
+                if(parameter.Type.is)
+
+              var assignment =   SyntaxFactory.VariableDeclaration(parameter.Type, SyntaxFactory.SeparatedList(new[] { Declarator(parameter.Identifier.Text, initializer) }));
+            //
+
+            var assignment = 
+                    SyntaxFactory.LocalDeclarationStatement(SyntaxFactory.VariableDeclaration(SyntaxFactory.IdentifierName(parameter.Type.ToString() ?? string.Empty))
+                        .WithVariables
+                        (
+                            SyntaxFactory.SingletonSeparatedList
+                            (
+                            SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(parameter.Identifier.Text))
+                                .WithInitializer
+                                (
+                                    SyntaxFactory.EqualsValueClause
+                                    (
+                                        SyntaxFactory.DefaultExpression(SyntaxFactory.IdentifierName(parameter.Type?.ToString() ?? string.Empty))
+                                    )
+                                )
+                            )
+                        )
+                    );
+
+                result.Add(assignment);
+            }
+
+            return result;
+        }
+*/
+
 
     }
 }

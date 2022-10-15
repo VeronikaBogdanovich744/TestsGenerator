@@ -3,9 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32825.248
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestsGenerator", "TestsGenerator\TestsGenerator.csproj", "{453BA32B-9A54-4E5F-BFA9-5A25CD78AE60}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestsGenerator", "TestsGenerator\TestsGenerator.csproj", "{453BA32B-9A54-4E5F-BFA9-5A25CD78AE60}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestGeneratorLibrary", "TestGeneratorLibrary\TestGeneratorLibrary.csproj", "{40926386-D6EF-456E-8CF9-0CBB1DD816B7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestGeneratorLibrary", "TestGeneratorLibrary\TestGeneratorLibrary.csproj", "{40926386-D6EF-456E-8CF9-0CBB1DD816B7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "Tests\Tests.csproj", "{D88C3618-2B46-4AE7-B5D3-B69F75E1C4E3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExampleClassesLibrary", "ExampleClassesLibrary\ExampleClassesLibrary.csproj", "{788531CA-EFD0-49E4-AF30-FD73638644AD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectCheckFunctionalityTests", "ProjectCheckFunctionalityTests\ProjectCheckFunctionalityTests.csproj", "{76D91BEC-A8F2-46E7-87B3-0BD95F4FB2F1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +27,18 @@ Global
 		{40926386-D6EF-456E-8CF9-0CBB1DD816B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{40926386-D6EF-456E-8CF9-0CBB1DD816B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{40926386-D6EF-456E-8CF9-0CBB1DD816B7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D88C3618-2B46-4AE7-B5D3-B69F75E1C4E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D88C3618-2B46-4AE7-B5D3-B69F75E1C4E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D88C3618-2B46-4AE7-B5D3-B69F75E1C4E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D88C3618-2B46-4AE7-B5D3-B69F75E1C4E3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{788531CA-EFD0-49E4-AF30-FD73638644AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{788531CA-EFD0-49E4-AF30-FD73638644AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{788531CA-EFD0-49E4-AF30-FD73638644AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{788531CA-EFD0-49E4-AF30-FD73638644AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{76D91BEC-A8F2-46E7-87B3-0BD95F4FB2F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{76D91BEC-A8F2-46E7-87B3-0BD95F4FB2F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{76D91BEC-A8F2-46E7-87B3-0BD95F4FB2F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{76D91BEC-A8F2-46E7-87B3-0BD95F4FB2F1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
