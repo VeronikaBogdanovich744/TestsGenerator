@@ -12,7 +12,6 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace TestGeneratorLibrary
 {
-   // using static SyntaxFactory;
     public class TestGenerator
     {
         private readonly TestGeneratorConfig config;
@@ -36,7 +35,6 @@ namespace TestGeneratorLibrary
                 }
                 );
 
-            //var generateTestsByFile = new TransformManyBlock<string, string>
             var generateTestsByFile = new TransformManyBlock<string, TestFile>
             (
               async data => await GenerateTestClasses(data),
@@ -115,16 +113,11 @@ namespace TestGeneratorLibrary
                         )
                     );
 
-                //var depInj = GenerateDependencyInjection(classDeclaration);
-
-                //@class = @class.AddMembers(depInj.Item1.ToArray());
-                // @class = @class.AddMembers(depInj.Item2);
-                //@class = @class.AddMembers(GenerateArrangeStatements(classDeclaration).ToArray());
                 @class = @class.AddMembers(GenerateTestMethods(classDeclaration).ToArray());
 
                 compilationUnit = compilationUnit.AddMembers(@namespace.AddMembers(@class));
-                var testFile = new TestFile(/*classDeclaration.Identifier.Text*/@class.Identifier.Text, compilationUnit.NormalizeWhitespace("    ","\r\n").ToString());//compilationUnit.NormalizeWhitespace().ToString());
-                return testFile;// compilationUnit.ToString();//.NormalizeWhitespace().ToString();
+                var testFile = new TestFile(@class.Identifier.Text, compilationUnit.NormalizeWhitespace("    ","\r\n").ToString());
+                return testFile;
             });
         }
 
@@ -132,7 +125,6 @@ namespace TestGeneratorLibrary
         private IEnumerable<UsingDirectiveSyntax> GenerateTestUsings(CompilationUnitSyntax root)
         {
             var result = new Dictionary<string, UsingDirectiveSyntax>();
-           // var defaultUsings = GenerateDefaultTestUsings();
 
             var @namespace = root.Members.OfType<NamespaceDeclarationSyntax>().FirstOrDefault();
 
@@ -144,11 +136,7 @@ namespace TestGeneratorLibrary
 
                 result.TryAdd(selfUsing.Name.ToString(), selfUsing);
             }
-            /*
-            foreach (var defaultUsing in defaultUsings)
-            {
-                result.TryAdd(defaultUsing.Name.ToString(), defaultUsing);
-            }*/
+
             foreach (var rootUsing in root.Usings)
             {
                 result.TryAdd(rootUsing.Name.ToString(), rootUsing);
@@ -185,21 +173,11 @@ namespace TestGeneratorLibrary
                 } while (uniqueMethodsNames.Contains(uniqueName));
                 uniqueMethodsNames.Add(uniqueName);
 
-                var isAsync = methodDeclaration.Modifiers.Any(SyntaxKind.AsyncKeyword);
-                /* var isWithReturn = !(methodDeclaration.ReturnType.ToString() == "void" ||
-                                      isAsync && (methodDeclaration.ReturnType.ToString() == "void" ||
-                                                  methodDeclaration.ReturnType.ToString() == "Task" &&
-                                                  methodDeclaration.ReturnType is not GenericNameSyntax));*/
-
-                //body.AddRange(GenerateArrangeStatements(methodDeclaration));
                 body.Add(GenerateAssertFailStatement());
-             //   body.Add(GenerateActStatement(classDeclaration, methodDeclaration, isWithReturn, isAsync));
-
-              //  body.AddRange(GenerateAssertStatements(methodDeclaration, isWithReturn, isAsync));
 
                 var method =
                     SyntaxFactory.MethodDeclaration(
-                        /*isAsync ? SyntaxFactory.IdentifierName("Task") :*/ SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword)),
+                         SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword)),
                         SyntaxFactory.Identifier(uniqueName)
                     )
                     .WithAttributeLists(
@@ -209,11 +187,6 @@ namespace TestGeneratorLibrary
                         )
                     )
                     .WithModifiers(
-                        /*isAsync ?
-                            SyntaxFactory.TokenList(
-                                SyntaxFactory.Token(SyntaxKind.PublicKeyword),
-                                SyntaxFactory.Token(SyntaxKind.AsyncKeyword)
-                            ) :*/
                             SyntaxFactory.TokenList(
                                 SyntaxFactory.Token(SyntaxKind.PublicKeyword)
                             )
@@ -242,45 +215,6 @@ namespace TestGeneratorLibrary
 
             return statement;
         }
-
-       /* private List<StatementSyntax> GenerateArrangeStatements(MethodDeclarationSyntax methodDeclaration)
-        {
-            var parameters = methodDeclaration.ParameterList.Parameters;
-            var result = new List<StatementSyntax>();
-
-            foreach (var parameter in parameters)
-            {
-/*
-                if(parameter.Type.is)
-
-              var assignment =   SyntaxFactory.VariableDeclaration(parameter.Type, SyntaxFactory.SeparatedList(new[] { Declarator(parameter.Identifier.Text, initializer) }));
-            //
-
-            var assignment = 
-                    SyntaxFactory.LocalDeclarationStatement(SyntaxFactory.VariableDeclaration(SyntaxFactory.IdentifierName(parameter.Type.ToString() ?? string.Empty))
-                        .WithVariables
-                        (
-                            SyntaxFactory.SingletonSeparatedList
-                            (
-                            SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(parameter.Identifier.Text))
-                                .WithInitializer
-                                (
-                                    SyntaxFactory.EqualsValueClause
-                                    (
-                                        SyntaxFactory.DefaultExpression(SyntaxFactory.IdentifierName(parameter.Type?.ToString() ?? string.Empty))
-                                    )
-                                )
-                            )
-                        )
-                    );
-
-                result.Add(assignment);
-            }
-
-            return result;
-        }
-*/
-
 
     }
 }
